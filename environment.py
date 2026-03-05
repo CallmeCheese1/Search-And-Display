@@ -14,6 +14,7 @@ class NodeType(Enum):
     WALL = 1
     START = 2
     GOAL = 3
+    MARKED = 4
 
 #Fundamental building blocks of the entire project. Nodes are created with the row, column, and the type, defaulting to empty. Comes with string representation, equality, and hashing.
 class Node:
@@ -139,10 +140,24 @@ class Grid:
         
         return neighbors
     
+    def mark_path(self, path):
+        """Mark nodes in the given path (except start and goal) for visualization."""
+        for node in path:
+            # Don't overwrite start and goal nodes
+            if node.type == NodeType.EMPTY:
+                node.type = NodeType.MARKED
+    
+    def clear_marks(self):
+        """Clear all marked nodes back to empty."""
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.grid[row][col].type == NodeType.MARKED:
+                    self.grid[row][col].type = NodeType.EMPTY
+    
     def print_grid(self):
         """Do you really need to be told what a PRINT_GRID function does?"""
         print(f"\nGrid ({self.size}x{self.size}):")
-        print("S = Start, G = Goal, # = Wall, . = Empty")
+        print("S = Start, G = Goal, # = Wall, . = Empty, X = Path")
 
         print()
         
@@ -156,6 +171,8 @@ class Grid:
                     line += "G "
                 elif node.type == NodeType.WALL:
                     line += "# "
+                elif node.type == NodeType.MARKED:
+                    line += "X "
                 else:
                     line += ". "
             print(line)
