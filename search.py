@@ -6,8 +6,6 @@ from collections import deque
 def bfs(grid: Grid, start: Node):
     """Given a grid, use a Breadth-First Search algorithm to return a list of nodes pathing from the start to the goal, or return None if no path exists."""
 
-    #no recursion this time! hooray. am i rite
-
     #Define a frontier, a deque which holds what we are/will currently look at, and visited, both of which will just start with the starting node
     frontier = deque([start])
     visited = set()
@@ -72,34 +70,6 @@ def dfs(grid: Grid, visited: set[Node], start: Node):
         return None
 
 #Fun fact for future reflection: The first time, after I created the DFS algorithm, it technically worked, but it just returned a long list of the coordinates that was hard to follow. So I prompted Claude with environment.py and search.py to create a way to mark noddes in a path, and it created exactly what I needed. The power of the sun in the palm of my hand.
-
-'''
-if __name__ == "__main__":
-    # Create a test grid
-    print("=== DFS Test ===")
-    grid = Grid(8)  # Smaller grid for easier visualization
-    grid.print_grid()
-    
-    # Run DFS from start to goal
-    visited = set()
-    path = dfs(grid, visited, grid.start_node)
-    
-    if path:
-        print(f"Path found! Length: {len(path)}")
-        print("Path coordinates:")
-        for i, node in enumerate(path):
-            print(f"  {i+1}. ({node.row}, {node.column}) [{node.type.name}]")
-        
-        # Mark the path and show it visually
-        grid.mark_path(path)
-        print("\nGrid with path marked:")
-        grid.print_grid()
-        
-    else:
-        print("No path found!")
-    
-    print(f"\nLength of final path: {len(visited)}"
-'''
 
 if __name__ == "__main__":
     # Create a test grid
