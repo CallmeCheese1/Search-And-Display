@@ -1,22 +1,51 @@
 from environment import Grid, NodeType, Node
+from collections import deque
 
 #Will hold the algorithmic code for both Depth-First Search and Breadth-First Search Algorithms.
 
-def bfs(grid: Grid):
+def bfs(grid: Grid, start: Node):
     """Given a grid, use a Breadth-First Search algorithm to return a list of nodes pathing from the start to the goal, or return None if no path exists."""
 
-    pass
+    #no recursion this time! hooray. am i rite
+
+    #Define a frontier, a deque which holds what we are/will currently look at, and visited, both of which will just start with the starting node
+    frontier = deque([start])
+    visited = set()
+
+    #Then, for as long as we have a frontier...
+    #Take the current Node, popped from the left of frontier
+    #if it's the goal, hooray! reconstruct the path and return that path
+
+    while frontier:
+        current_node = frontier.popleft()
+
+        if current_node in visited:
+            continue
+        visited.add(current_node)
+
+        if current_node.type is NodeType.GOAL:
+            path = []
+            while current_node is not None:
+                path.insert(0, current_node)
+                current_node = current_node.parent
+            return path
+
+        
+        neighbors = grid.get_neighbors(current_node)
+        
+        if neighbors:
+            for neighbor in neighbors:
+                if neighbor not in visited:
+                    neighbor.parent = current_node
+                    frontier.append(neighbor)
+
+    return None
 
 def dfs(grid: Grid, visited: set[Node], start: Node):
     """Given a grid, use a Depth-First Search algorithm to return a list of nodes pathing from the start to the goal, or return None if no path exists."""
 
-    #note: Nodes have a row, a column, and a type, either EMPTY, START, or FINISH. 
-
-    #we'll need the grid, a visited list, and the starting node
-
     #first, check if the starting node is a Goal node. If so, we've found the goal, and we pass it back up in a list on its own
     if start.type is NodeType.GOAL:
-        print("dfs: GOAL found! Passing it up the chain.")
         return [start]
     else:
         visited.add(start)
@@ -44,6 +73,7 @@ def dfs(grid: Grid, visited: set[Node], start: Node):
 
 #Fun fact for future reflection: The first time, after I created the DFS algorithm, it technically worked, but it just returned a long list of the coordinates that was hard to follow. So I prompted Claude with environment.py and search.py to create a way to mark noddes in a path, and it created exactly what I needed. The power of the sun in the palm of my hand.
 
+'''
 if __name__ == "__main__":
     # Create a test grid
     print("=== DFS Test ===")
@@ -68,4 +98,39 @@ if __name__ == "__main__":
     else:
         print("No path found!")
     
-    print(f"\nLength of final path: {len(visited)}")
+    print(f"\nLength of final path: {len(visited)}"
+'''
+
+if __name__ == "__main__":
+    # Create a test grid
+    print("=== Path Search Algorithm Comparison ===")
+    grid = Grid(8)  # Smaller grid for easier visualization
+    print("Starting Grid:")
+    grid.print_grid()
+    
+    # Test DFS
+    print("=== DFS Results ===")
+    visited_dfs = set()
+    dfs_path = dfs(grid, visited_dfs, grid.start_node)
+    
+    if dfs_path:
+        print(f"DFS Path found! Length: {len(dfs_path)}")
+        grid.mark_path(dfs_path)
+        print("Grid with DFS path marked:")
+        grid.print_grid()
+        grid.clear_marks()  # Clear for next test
+    else:
+        print("DFS: No path found!")
+    
+    # Test BFS
+    print("=== BFS Results ===")
+    bfs_path = bfs(grid, grid.start_node)
+    
+    if bfs_path:
+        print(f"BFS Path found! Length: {len(bfs_path)}")
+        grid.mark_path(bfs_path)
+        print("Grid with BFS path marked:")
+        grid.print_grid()
+    else:
+        print("BFS: No path found!")
+

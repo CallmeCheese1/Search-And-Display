@@ -28,6 +28,7 @@ class Node:
         self.row = row
         self.column = column
         self.type = node_type
+        self.parent = None
     
     #What happens if we try to print a node?
     def __repr__(self):
