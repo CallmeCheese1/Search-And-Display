@@ -1,5 +1,6 @@
 from collections import deque
 from environment import NodeType, Grid, Node
+from binary_tree import VisualizationTree
 
 class BFS_SearchAgent:
     """A search agent that relies on Breadth-First Search, given the grid and the start node. Call step() for me to move through BFS step by step, marking Nodes along the way. Once is_finished becomes true, either my .path will have a path, or it'll be an empty list, if I couldn't find a path."""
@@ -9,6 +10,7 @@ class BFS_SearchAgent:
 
         self.frontier = deque([start_node])
         self.visited = set()
+        self.tree = VisualizationTree(start_node)
 
         self.is_finished = False
         self.path = []
@@ -37,6 +39,7 @@ class BFS_SearchAgent:
         if current_node.type == NodeType.GOAL:
             self.is_finished = True
             self.path = self._reconstruct_path(current_node)
+            print(self.tree)
             return
 
         #At the end of the day, if we're still here, go ahead and queue up the rest of the nearby neighbors. Check it's not in visited, and then add it to the END of our queue.
@@ -44,6 +47,9 @@ class BFS_SearchAgent:
             if neighbor not in self.visited:
 
                 neighbor.parent = current_node
+
+                self.tree.add_edge(current_node, neighbor)
+
                 self.frontier.append(neighbor)
                 
     def _reconstruct_path(self, goal_node):

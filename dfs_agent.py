@@ -1,5 +1,6 @@
 from collections import deque
 from environment import NodeType, Grid, Node
+from binary_tree import VisualizationTree
 
 
 # Note for the future person: This class was almost entirely generated from Claude by giving it bfs_agent.py and search.py as context and telling to recreate my DFS algorithm in a step-by-step format just like how bfs_agent compares to the bfs algorithm in search.py.
@@ -12,6 +13,8 @@ class DFS_SearchAgent:
 
         self.frontier = deque([start_node])  # Using as a stack for DFS
         self.visited = set()
+
+        self.tree = VisualizationTree(start_node)
 
         self.is_finished = False
         self.path = []
@@ -40,12 +43,17 @@ class DFS_SearchAgent:
         if current_node.type == NodeType.GOAL:
             self.is_finished = True
             self.path = self._reconstruct_path(current_node)
+            print(self.tree)
+
             return
 
         #At the end of the day, if we're still here, go ahead and stack up the rest of the nearby neighbors. Check it's not in visited, and then add it to the END of our stack (right side of deque).
         for neighbor in self.grid.get_neighbors(current_node):
             if neighbor not in self.visited:
                 neighbor.parent = current_node
+
+                self.tree.add_edge(current_node, neighbor)
+
                 self.frontier.append(neighbor)
                 
     def _reconstruct_path(self, goal_node):
