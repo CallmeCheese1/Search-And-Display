@@ -36,7 +36,8 @@ UI_COLORS = {
     'tree_background': (250, 250, 250),
     'tree_node': (200, 200, 255),
     'tree_current': (255, 100, 100),
-    'tree_edge': (100, 100, 100)
+    'tree_edge': (100, 100, 100),
+    'path': (255, 255, 0)
 }
 
 class Button:
@@ -141,274 +142,147 @@ def draw_grid(screen, grid_obj):
             # Optional: Draw a grid line outline around each cell
             pygame.draw.rect(screen, (200, 200, 200), (x, y, CELL_SIZE, CELL_SIZE), 1)
 
-def get_active_node_context(agent, layers=2):
-    """Get the active node and surrounding context (siblings at each level)."""
-    if not agent:
-        return [], [], None
-    
-    # Determine the active node (currently being processed)
-    active_node = None
-    
-    # The active node should be the next node to be processed from the frontier
-    if hasattr(agent, 'frontier') and agent.frontier and len(agent.frontier) > 0:
-        # For BFS: next node is at front (index 0)
-        # For DFS: next node is at back (index -1) 
-        if isinstance(agent, BFS_SearchAgent):
-            active_node = agent.frontier[0]  # Next to be processed (popleft)
-        elif isinstance(agent, DFS_SearchAgent):
-            active_node = agent.frontier[-1]  # Next to be processed (pop)
-        else:
-            active_node = agent.frontier[0]  # Default to first
-    
-    # If no frontier, try to get the most recently visited node
-    if not active_node and hasattr(agent, 'visited') and agent.visited:
-        # Convert set to list and get last item (though set order isn't guaranteed)
-        visited_list = list(agent.visited)
-        if visited_list:
-            active_node = visited_list[-1]
-    
-    # Final fallback to root if nothing else works
-    if not active_node and hasattr(agent, 'tree') and agent.tree and agent.tree.root:
-        active_node = agent.tree.root
-    
-    if not active_node:
-        return [], [], None
-    
-    # Make sure we have tree edges to work with
-    if not hasattr(agent, 'tree') or not agent.tree or not agent.tree.edges:
-        # If we only have the root, still show it
-        if active_node:
-            return [active_node], [], active_node
-        return [], [], None
-    
-    # Build complete tree structure and assign absolute levels from root
-    parent_to_children = {}
-    child_to_parent = {}
-    all_nodes = {agent.tree.root}
-    
-    for parent, child in agent.tree.edges:
-        if parent not in parent_to_children:
-            parent_to_children[parent] = []
-        parent_to_children[parent].append(child)
-        child_to_parent[child] = parent
-        all_nodes.add(parent)
-        all_nodes.add(child)
-    
-    # Assign absolute levels from root using BFS
-    absolute_levels = {agent.tree.root: 0}
-    queue = [(agent.tree.root, 0)]
-    
-    while queue:
-        node, level = queue.pop(0)
-        if node in parent_to_children:
-            for child in parent_to_children[node]:
-                if child not in absolute_levels:
-                    absolute_levels[child] = level + 1
-                    queue.append((child, level + 1))
-    
-    # Find the active node's level
-    active_level = absolute_levels.get(active_node, 0)
-    
-    # Collect all nodes within the level range (show all siblings at each level)
-    nodes_to_show = set()
-    edges_to_show = []
-    
-    min_level = max(0, active_level - layers)  # Don't go below root level
-    max_level = active_level + layers
-    
-    # Add all nodes at levels within range
-    for node, level in absolute_levels.items():
-        if min_level <= level <= max_level:
-            nodes_to_show.add(node)
-    
-    # Add all edges between nodes that we're showing
-    for parent, child in agent.tree.edges:
-        if parent in nodes_to_show and child in nodes_to_show:
-            edges_to_show.append((parent, child))
-    
-    return list(nodes_to_show), edges_to_show, active_node
-
-def calculate_active_tree_positions(nodes, edges, active_node, tree_panel_bounds):
-    """Calculate positions for active node tree showing siblings at each level."""
-    if not nodes or not active_node:
-        return {}
-    
-    tree_x, tree_y, tree_width, tree_height = tree_panel_bounds
-    
-    # Handle case with only one node (just show it centered)
-    if len(nodes) == 1:
-        center_x = tree_x + tree_width // 2
-        center_y = tree_y + tree_height // 2
-        return {nodes[0]: (center_x, center_y)}
-    
-    # Build parent-child relationships
-    parent_to_children = {}
-    child_to_parent = {}
-    
-    for parent, child in edges:
-        if parent not in parent_to_children:
-            parent_to_children[parent] = []
-        parent_to_children[parent].append(child)
-        child_to_parent[child] = parent
-    
-    # Find root node (appears as parent but never as child, or is in nodes but not a child)
-    root_node = None
-    for node in nodes:
-        if node not in child_to_parent:
-            root_node = node
-            break
-    
-    # If we can't find a clear root, use the active node as reference
-    if not root_node:
-        root_node = active_node
-    
-    # Assign absolute levels from root using BFS
-    levels = {root_node: 0}
-    queue = [(root_node, 0)]
-    
-    while queue:
-        node, level = queue.pop(0)
-        if node in parent_to_children:
-            for child in parent_to_children[node]:
-                if child not in levels and child in nodes:  # Only process nodes we're showing
-                    levels[child] = level + 1
-                    queue.append((child, level + 1))
-    
-    # Ensure active_node has a level (in case tree structure is incomplete)
-    if active_node not in levels:
-        levels[active_node] = 0  # Default to level 0
-    
-    # Find active node's level for centering
-    active_level = levels.get(active_node, 0)
-    
-    # Group nodes by level
-    level_groups = {}
-    for node, level in levels.items():
-        if node in nodes:  # Only include nodes we're showing
-            if level not in level_groups:
-                level_groups[level] = []
-            level_groups[level].append(node)
-    
-    # If somehow no nodes got levels, just put them all at level 0
-    if not level_groups:
-        level_groups[0] = list(nodes)
-    
-    # Calculate positions
-    positions = {}
-    node_radius = 20  # Smaller nodes to fit more
-    level_height = 80  # Tighter vertical spacing
-    
-    # Center the active node's level vertically in the panel
-    center_y = tree_y + tree_height // 2
-    
-    for level, level_nodes in level_groups.items():
-        # Calculate relative position from active level
-        level_offset = level - active_level
-        y = center_y + (level_offset * level_height)
-        
-        # Skip if outside panel bounds
-        if y < tree_y + 60 or y > tree_y + tree_height - 60:
-            continue
-            
-        num_nodes = len(level_nodes)
-        if num_nodes == 1:
-            x = tree_x + tree_width // 2
-            positions[level_nodes[0]] = (x, y)
-        else:
-            # Distribute nodes across the width
-            available_width = tree_width - 80  # Leave margins
-            if num_nodes > 1:
-                spacing = available_width / (num_nodes - 1)
-                start_x = tree_x + 40
-            else:
-                spacing = 0
-                start_x = tree_x + tree_width // 2
-            
-            for i, node in enumerate(level_nodes):
-                x = start_x + (i * spacing)
-                positions[node] = (x, y)
-    
-    return positions
-
 def draw_tree_visualization(screen, font, agent):
-    """Draw the tree visualization panel focused on active node."""
+    """Draws a 5-tier tree, overriding to a wrapped path view when finished."""
     tree_x = GRID_WINDOW_SIZE
     tree_panel = pygame.Rect(tree_x, 0, TREE_PANEL_WIDTH, WINDOW_HEIGHT)
     pygame.draw.rect(screen, UI_COLORS['tree_background'], tree_panel)
     pygame.draw.rect(screen, UI_COLORS['text'], tree_panel, 2)
     
-    # Title
-    title_text = font.render("Search Tree (Siblings View)", True, UI_COLORS['text'])
+    if not agent or not hasattr(agent, 'current_node') or not agent.current_node:
+        title_text = font.render("Search Tree", True, UI_COLORS['text'])
+        screen.blit(title_text, (tree_x + 10, 10))
+        screen.blit(font.render("No active search.", True, UI_COLORS['text']), (tree_x + 10, 50))
+        return
+
+    # ==========================================
+    # THE PATH WRAPPER (Runs only when finished)
+    # ==========================================
+    if getattr(agent, 'is_finished', False):
+        if not hasattr(agent, 'path') or not agent.path:
+            title_text = font.render("Result: No Path Found", True, UI_COLORS['text'])
+            screen.blit(title_text, (tree_x + 10, 10))
+            return
+            
+        title_text = font.render("Result: Final Path Sequence", True, UI_COLORS['text'])
+        screen.blit(title_text, (tree_x + 10, 10))
+        
+        node_radius = 15
+        padding = 45 # Space between nodes
+        nodes_per_row = (TREE_PANEL_WIDTH - 20) // padding
+        
+        # 1. Calculate all positions for the snake wrap
+        positions = []
+        for i, node in enumerate(agent.path):
+            row = i // nodes_per_row
+            col = i % nodes_per_row
+            
+            x = tree_x + 30 + (col * padding)
+            y = 70 + (row * padding)
+            positions.append((x, y, node))
+            
+        # 2. Draw connecting lines
+        for i in range(len(positions) - 1):
+            x1, y1, _ = positions[i]
+            x2, y2, _ = positions[i+1]
+            pygame.draw.line(screen, UI_COLORS['path'], (x1, y1), (x2, y2), 4)
+            
+        # 3. Draw the nodes on top
+        for x, y, node in positions:
+            color = UI_COLORS['tree_current'] if node in (agent.path[0], agent.path[-1]) else UI_COLORS['path']
+            pygame.draw.circle(screen, color, (x, y), node_radius)
+            pygame.draw.circle(screen, UI_COLORS['text'], (x, y), node_radius, 2)
+            
+            text = font.render(f"{node.row},{node.column}", True, UI_COLORS['text'])
+            text = pygame.transform.scale(text, (int(text.get_width() * 0.6), int(text.get_height() * 0.6)))
+            screen.blit(text, text.get_rect(center=(x, y)))
+            
+        return # Bail out so we don't draw the 5-tier tree!
+
+    # ==========================================
+    # THE 5-TIER PAGING TREE (Runs while searching)
+    # ==========================================
+    title_text = font.render("5-Tier Search Tree", True, UI_COLORS['text'])
     screen.blit(title_text, (tree_x + 10, 10))
+
+    current = agent.current_node
+
+    if not hasattr(agent, 'view_root') or not agent.view_root:
+        agent.view_root = current
+
+    temp = current
+    depth = 0
+    found_root = False
     
-    if not agent:
-        no_agent_text = font.render("No agent active", True, UI_COLORS['text'])
-        screen.blit(no_agent_text, (tree_x + 10, 50))
-        return
-    
-    if not agent.tree.edges:
-        no_tree_text = font.render("No exploration yet", True, UI_COLORS['text'])
-        screen.blit(no_tree_text, (tree_x + 10, 50))
-        return
-    
-    # Get active node context
-    nodes, edges, active_node = get_active_node_context(agent, layers=2)
-    
-    if not nodes:
-        return
-    
-    # Calculate focused tree positions
-    tree_bounds = (tree_x, 0, TREE_PANEL_WIDTH, WINDOW_HEIGHT)
-    node_positions = calculate_active_tree_positions(nodes, edges, active_node, tree_bounds)
-    
-    # Draw edges first
-    for parent, child in edges:
-        if parent in node_positions and child in node_positions:
-            start_pos = node_positions[parent]
-            end_pos = node_positions[child]
-            pygame.draw.line(screen, UI_COLORS['tree_edge'], start_pos, end_pos, 3)
-    
-    # Draw nodes
-    node_radius = 20  # Match the positioning function
-    for node in nodes:
-        if node in node_positions:
+    while temp and depth < 5:
+        if temp == agent.view_root:
+            found_root = True
+            break
+        temp = temp.parent
+        depth += 1
+
+    if not found_root:
+        new_root = current
+        up_steps = 0
+        while new_root.parent and up_steps < 4:
+            new_root = new_root.parent
+            up_steps += 1
+        agent.view_root = new_root
+
+    children_map = {}
+    for p, c in agent.tree.edges:
+        if p not in children_map:
+            children_map[p] = []
+        children_map[p].append(c)
+
+    levels = {0: [agent.view_root]}
+    for d in range(4): 
+        next_level = []
+        for node in levels.get(d, []):
+            next_level.extend(children_map.get(node, []))
+        if next_level:
+            levels[d + 1] = next_level
+        else:
+            break
+
+    node_positions = {}
+    tier_height = WINDOW_HEIGHT // 6
+    node_radius = 15
+
+    for level, nodes in levels.items():
+        y = tier_height * (level + 1)
+        spacing = TREE_PANEL_WIDTH // (len(nodes) + 1)
+        for i, node in enumerate(nodes):
+            x = tree_x + (spacing * (i + 1))
+            node_positions[node] = (x, y)
+
+    def draw_node(node, x, y, color):
+        pygame.draw.circle(screen, color, (x, y), node_radius)
+        pygame.draw.circle(screen, UI_COLORS['text'], (x, y), node_radius, 1)
+        text = font.render(f"{node.row},{node.column}", True, UI_COLORS['text'])
+        text = pygame.transform.scale(text, (int(text.get_width() * 0.7), int(text.get_height() * 0.7)))
+        screen.blit(text, text.get_rect(center=(x, y)))
+
+    for level in range(4):
+        for parent_node in levels.get(level, []):
+            if parent_node in node_positions:
+                px, py = node_positions[parent_node]
+                for child_node in children_map.get(parent_node, []):
+                    if child_node in node_positions:
+                        cx, cy = node_positions[child_node]
+                        pygame.draw.line(screen, UI_COLORS['tree_edge'], (px, py), (cx, cy), 2)
+
+    for level, nodes in levels.items():
+        for node in nodes:
             x, y = node_positions[node]
-            
-            # Choose color based on node status
-            if node == active_node:
-                color = UI_COLORS['tree_current']  # Red for active
-            elif node == agent.tree.root:
-                color = (100, 255, 100)  # Green for root
+            if node == current:
+                color = UI_COLORS['tree_current']
+            elif node in agent.visited:
+                color = (150, 150, 150)
             else:
-                color = UI_COLORS['tree_node']  # Blue for others
-            
-            # Draw node circle
-            pygame.draw.circle(screen, color, (int(x), int(y)), node_radius)
-            pygame.draw.circle(screen, UI_COLORS['text'], (int(x), int(y)), node_radius, 2)
-            
-            # Draw coordinates text (smaller font for more nodes)
-            coord_text = f"({node.row},{node.column})"
-            text_surface = font.render(coord_text, True, UI_COLORS['text'])
-            text_rect = text_surface.get_rect(center=(int(x), int(y)))
-            screen.blit(text_surface, text_rect)
-    
-    # Draw legend
-    legend_y = WINDOW_HEIGHT - 80
-    legend_items = [
-        ("Active Node", UI_COLORS['tree_current']),
-        ("Root Node", (100, 255, 100)),
-        ("Other Nodes", UI_COLORS['tree_node'])
-    ]
-    
-    for i, (label, color) in enumerate(legend_items):
-        legend_x = tree_x + 10
-        legend_item_y = legend_y + i * 20
-        
-        pygame.draw.circle(screen, color, (legend_x + 10, legend_item_y + 7), 8)
-        pygame.draw.circle(screen, UI_COLORS['text'], (legend_x + 10, legend_item_y + 7), 8, 1)
-        
-        label_surface = font.render(label, True, UI_COLORS['text'])
-        screen.blit(label_surface, (legend_x + 25, legend_item_y))
+                color = UI_COLORS['tree_node']
+                
+            draw_node(node, x, y, color)
 
 def draw_control_panel(screen, font, grid_status, agent_status, search_status, algorithm_type):
     """Draw the control panel on the right side."""

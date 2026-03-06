@@ -25,6 +25,7 @@ class BFS_SearchAgent:
         
         #Just like normal, we take our first node by looking at the firs tone in the queue.
         current_node = self.frontier.popleft()
+        self.current_node = current_node
 
         #Are we at a duplicate? Return! Where to? Dunno!
         if current_node in self.visited:

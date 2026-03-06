@@ -29,6 +29,7 @@ class DFS_SearchAgent:
         
         #For DFS, we take the LAST node (stack behavior) by popping from the right of the deque.
         current_node = self.frontier.pop()
+        self.current_node = current_node
 
         #Are we at a duplicate? Return! Where to? Dunno!
         if current_node in self.visited:
