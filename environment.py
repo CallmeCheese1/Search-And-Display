@@ -15,6 +15,7 @@ class NodeType(Enum):
     START = 2
     GOAL = 3
     MARKED = 4
+    PATH = 5
 
 #Fundamental building blocks of the entire project. Nodes are created with the row, column, and the type, defaulting to empty. Comes with string representation, equality, and hashing.
 class Node:
@@ -173,6 +174,8 @@ class Grid:
                 elif node.type == NodeType.WALL:
                     line += "# "
                 elif node.type == NodeType.MARKED:
+                    line += "* "
+                elif node.type == NodeType.PATH:
                     line += "X "
                 else:
                     line += ". "

@@ -14,7 +14,8 @@ COLORS = {
     NodeType.WALL: (50, 50, 50),     # Dark Gray
     NodeType.START: (0, 255, 0),     # Green
     NodeType.GOAL: (255, 0, 0),      # Red
-    NodeType.MARKED: (0, 0, 255)     # Blue
+    NodeType.MARKED: (0, 0, 255),    # Blue
+    NodeType.PATH: (255, 255, 0)     # Yellow
 }
 
 def draw_grid(screen, grid_obj):
