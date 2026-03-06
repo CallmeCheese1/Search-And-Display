@@ -1,28 +1,31 @@
 from collections import deque
 from environment import NodeType, Grid, Node
 
-class BFS_SearchAgent:
-    """A search agent that relies on Breadth-First Search, given the grid and the start node. Call step() for me to move through BFS step by step, marking Nodes along the way. Once is_finished becomes true, either my .path will have a path, or it'll be an empty list, if I couldn't find a path."""
+
+# Note for the future person: This class was almost entirely generated from Claude by giving it bfs_agent.py and search.py as context and telling to recreate my DFS algorithm in a step-by-step format just like how bfs_agent compares to the bfs algorithm in search.py.
+
+class DFS_SearchAgent:
+    """A search agent that relies on Depth-First Search, given the grid and the start node. Call step() for me to move through DFS step by step, marking Nodes along the way. Once is_finished becomes true, either my .path will have a path, or it'll be an empty list, if I couldn't find a path."""
 
     def __init__(self, grid, start_node):
         self.grid = grid
 
-        self.frontier = deque([start_node])
+        self.frontier = deque([start_node])  # Using as a stack for DFS
         self.visited = set()
 
         self.is_finished = False
         self.path = []
     
     def step(self):
-        """Move forward one step, based on the BFS algorithm. Won't run if is_finished is set to true, and at that point, either I'll have a finished path in .path, or I'll have an empty path if there's no hope."""
+        """Move forward one step, based on the DFS algorithm. Won't run if is_finished is set to true, and at that point, either I'll have a finished path in .path, or I'll have an empty path if there's no hope."""
 
         #If we're finished, or we don't even have a frontier anymore, and this function gets called, mark that we're finished. 
         if self.is_finished or not self.frontier:
             self.is_finished = True
             return
         
-        #Just like normal, we take our first node by looking at the firs tone in the queue.
-        current_node = self.frontier.popleft()
+        #For DFS, we take the LAST node (stack behavior) by popping from the right of the deque.
+        current_node = self.frontier.pop()
 
         #Are we at a duplicate? Return! Where to? Dunno!
         if current_node in self.visited:
@@ -39,10 +42,9 @@ class BFS_SearchAgent:
             self.path = self._reconstruct_path(current_node)
             return
 
-        #At the end of the day, if we're still here, go ahead and queue up the rest of the nearby neighbors. Check it's not in visited, and then add it to the END of our queue.
+        #At the end of the day, if we're still here, go ahead and stack up the rest of the nearby neighbors. Check it's not in visited, and then add it to the END of our stack (right side of deque).
         for neighbor in self.grid.get_neighbors(current_node):
             if neighbor not in self.visited:
-
                 neighbor.parent = current_node
                 self.frontier.append(neighbor)
                 

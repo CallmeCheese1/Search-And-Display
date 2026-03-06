@@ -146,15 +146,34 @@ class Grid:
         """Mark nodes in the given path (except start and goal) for visualization."""
         for node in path:
             # Don't overwrite start and goal nodes
-            if node.type == NodeType.EMPTY:
-                node.type = NodeType.MARKED
+            if node.type == NodeType.EMPTY or node.type == NodeType.MARKED:
+                node.type = NodeType.PATH
     
     def clear_marks(self):
-        """Clear all marked nodes back to empty."""
+        """Clear all marked and pathed nodes back to empty, without actually resetting the whole grid or any positions."""
         for row in range(self.size):
             for col in range(self.size):
-                if self.grid[row][col].type == NodeType.MARKED:
-                    self.grid[row][col].type = NodeType.EMPTY
+
+                node = self.grid[row][col]
+
+                if node.type == NodeType.MARKED or node.type == NodeType.PATH:
+                    node.type = NodeType.EMPTY
+
+                if node.type != NodeType.START and node.type != NodeType.GOAL:
+                    node.parent = None
+    
+    #Here's a funny AI moment. At some point, I told Claude that we need to be able to run either agent without clearing and restarting the grid every time. As we'd expect, as humans, we'd probably want to use the above clear_marks() function to...clear the grid. But it doesn't have the condition to clear NodeType.PATH nodes. I ASSUMED that Claude would use the above clear_marks() function, and add that new function.
+    # ...clearly, my assumption was wrong, 'cause it just made a whole new function. I'm gonna leave this commented out for the sake of reflection, and just because it's funny. 
+    # def _reset_markings(self):
+    #     """Reset all MARKED and PATH nodes back to EMPTY for algorithm comparison."""
+    #     for row in range(self.size):
+    #         for col in range(self.size):
+    #             node = self.grid[row][col]
+    #             if node.type == NodeType.MARKED or node.type == NodeType.PATH:
+    #                 node.type = NodeType.EMPTY
+    #             # Also reset parent pointers for clean algorithm runs
+    #             if node.type != NodeType.START and node.type != NodeType.GOAL:
+    #                 node.parent = None
     
     def print_grid(self):
         """Do you really need to be told what a PRINT_GRID function does?"""
