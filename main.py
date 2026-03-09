@@ -4,9 +4,9 @@ from environment import Grid, NodeType
 from bfs_agent import BFS_SearchAgent
 from dfs_agent import DFS_SearchAgent
 
-#NOTE: The project goal is that we'll have, on the left side, a grid that, given we spawn a particular type of Agent, we'll animate the agent picking and checking particular nodes as blue, and then once it finds the goal, we mark all the nodes in the path as yellow. But then, on the right side, we'll have controls to manage the search process.
+#SO. Let's be honest here. In the spirit of time constraints, a lot of this main function is written with AI assistance, because, once I got the main window created initially, I turned to Claude to further develop the UI into looking how it does. Once I started getting into the weeds of visualizing the tree (as horrible as that went), I went between both Claude AND Gemini. So this was a three person effort. One person and two halves. One person and two bots. Just depends on your interpretation.
 
-# 1. Configuration
+# Constants to configure how our UI's gonna look.
 GRID_WINDOW_SIZE = 600
 TREE_PANEL_WIDTH = 400
 CONTROL_PANEL_WIDTH = 300
@@ -16,7 +16,7 @@ WINDOW_HEIGHT = GRID_WINDOW_SIZE
 GRID_SIZE = 10
 CELL_SIZE = GRID_WINDOW_SIZE // GRID_SIZE
 
-# Define some colors (RGB tuples)
+# Defines the colors for each of our types of nodes, used later on throughout the code.
 COLORS = {
     NodeType.EMPTY: (255, 255, 255), # White
     NodeType.WALL: (50, 50, 50),     # Dark Gray
@@ -122,6 +122,7 @@ class Slider:
         self.val = self.min_val + ratio * (self.max_val - self.min_val)
         self.update_handle_pos()
 
+#Uses our colors described above to draw out our grid with the right colors.
 def draw_grid(screen, grid_obj):
     """Iterate through the Grid object and draw rectangles on the left side."""
     if grid_obj is None:
@@ -142,6 +143,9 @@ def draw_grid(screen, grid_obj):
             # Optional: Draw a grid line outline around each cell
             pygame.draw.rect(screen, (200, 200, 200), (x, y, CELL_SIZE, CELL_SIZE), 1)
 
+#So, funny backstory behind this one. I straight up vibe coded through getting a visualization of the tree, and going through the weeds with Claude got SO bad that, as can be seen in the past commits, there were two behemoth functions that kept getting piled on to make the tree visualization as we needed.
+
+#When I turned to Gemini, who I was previously only using for a conceptual back and forth, Gemini essentially looked at the two behemoth functions and said "hell no", giving the singular function that we have now. Interesting to watch one AI call another AI's work so trash.
 def draw_tree_visualization(screen, font, agent):
     """Draws a 5-tier tree, overriding to a wrapped path view when finished."""
     tree_x = GRID_WINDOW_SIZE
@@ -311,6 +315,7 @@ def draw_control_panel(screen, font, grid_status, agent_status, search_status, a
         screen.blit(status_surface, (panel_x + PADDING, y_offset))
         y_offset += 30
 
+#The heart of the entire project. Sets up Pygame, creates our proper variables and agents, and runs each step by step. 
 def main():
     # 2. Setup Pygame
     pygame.init()
