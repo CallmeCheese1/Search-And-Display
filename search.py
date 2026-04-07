@@ -1,9 +1,9 @@
-from environment import Grid, NodeType, Node
+from environment import GraphEnvironment, NodeType
 from collections import deque
 
 #Will hold the algorithmic code for both Depth-First Search and Breadth-First Search Algorithms.
 
-def bfs(grid: Grid, start: Node):
+def bfs(grid: GraphEnvironment, start):
     """Given a grid, use a Breadth-First Search algorithm to return a list of nodes pathing from the start to the goal, or return None if no path exists."""
 
     #Define a frontier, a deque which holds what we are/will currently look at, and visited, both of which will just start with the starting node
@@ -21,11 +21,11 @@ def bfs(grid: Grid, start: Node):
             continue
         visited.add(current_node)
 
-        if current_node.type is NodeType.GOAL:
+        if grid.get_node_type(current_node) is NodeType.GOAL:
             path = []
             while current_node is not None:
                 path.insert(0, current_node)
-                current_node = current_node.parent
+                current_node = parents.get(current_node)
             return path
 
         
@@ -39,11 +39,11 @@ def bfs(grid: Grid, start: Node):
 
     return None
 
-def dfs(grid: Grid, visited: set[Node], start: Node):
+def dfs(grid: GraphEnvironment, visited: set, start):
     """Given a grid, use a Depth-First Search algorithm to return a list of nodes pathing from the start to the goal, or return None if no path exists."""
 
     #first, check if the starting node is a Goal node. If so, we've found the goal, and we pass it back up in a list on its own
-    if start.type is NodeType.GOAL:
+    if grid.get_node_type(start) is NodeType.GOAL:
         return [start]
     else:
         visited.add(start)
@@ -74,10 +74,7 @@ def dfs(grid: Grid, visited: set[Node], start: Node):
 if __name__ == "__main__":
     # Create a test grid
     print("=== Path Search Algorithm Comparison ===")
-    grid = Grid(8)  # Smaller grid for easier visualization
-    print("Starting Grid:")
-    grid.print_grid()
-    
+    grid = GraphEnvironment(8)  # Smaller grid for easier visualization
     # Test DFS
     print("=== DFS Results ===")
     visited_dfs = set()

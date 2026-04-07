@@ -1,6 +1,6 @@
 import pygame
 import sys
-from environment import Grid, NodeType
+from environment import GraphEnvironment, NodeType
 from bfs_agent import BFS_SearchAgent
 from dfs_agent import DFS_SearchAgent
 
@@ -123,7 +123,7 @@ class Slider:
         self.update_handle_pos()
 
 #Uses our colors described above to draw out our grid with the right colors.
-def draw_grid(screen, grid_obj):
+def draw_grid(screen, grid_obj, agent_obj=None):
     """Iterate through the Grid object and draw rectangles on the left side."""
     if grid_obj is None:
         return
@@ -131,14 +131,28 @@ def draw_grid(screen, grid_obj):
     for row in range(grid_obj.size):
         for col in range(grid_obj.size):
             node = grid_obj.get_node(row, col)
+            if node is None: continue
+            
+            node_type = grid_obj.get_node_type(node)
             
             # The math to find the pixel location (positioned starting at top-left corner)
             x = col * CELL_SIZE
             y = row * CELL_SIZE
             
+            # Extract agent drawing logic from environment markers
+            if agent_obj and getattr(agent_obj, 'is_finished', False) and agent_obj.path and node in agent_obj.path:
+                if node_type not in (NodeType.START, NodeType.GOAL): color = COLORS[NodeType.PATH]
+                else: color = COLORS[node_type]
+            elif agent_obj and getattr(agent_obj, 'current_node', None) == node:
+                color = UI_COLORS['path']
+            elif agent_obj and node in getattr(agent_obj, 'visited', set()):
+                if node_type not in (NodeType.START, NodeType.GOAL): color = COLORS[NodeType.MARKED]
+                else: color = COLORS[node_type]
+            else:
+                color = COLORS.get(node_type, (255, 255, 255))
+            
             # The Pygame drawing function
-            # pygame.draw.rect(surface, color, (x, y, width, height))
-            pygame.draw.rect(screen, COLORS[node.type], (x, y, CELL_SIZE, CELL_SIZE))
+            pygame.draw.rect(screen, color, (x, y, CELL_SIZE, CELL_SIZE))
             
             # Optional: Draw a grid line outline around each cell
             pygame.draw.rect(screen, (200, 200, 200), (x, y, CELL_SIZE, CELL_SIZE), 1)
@@ -197,7 +211,7 @@ def draw_tree_visualization(screen, font, agent):
             pygame.draw.circle(screen, color, (x, y), node_radius)
             pygame.draw.circle(screen, UI_COLORS['text'], (x, y), node_radius, 2)
             
-            text = font.render(f"{node.row},{node.column}", True, UI_COLORS['text'])
+            text = font.render(f"{node[0]},{node[1]}", True, UI_COLORS['text'])
             text = pygame.transform.scale(text, (int(text.get_width() * 0.6), int(text.get_height() * 0.6)))
             screen.blit(text, text.get_rect(center=(x, y)))
             
@@ -222,14 +236,14 @@ def draw_tree_visualization(screen, font, agent):
         if temp == agent.view_root:
             found_root = True
             break
-        temp = temp.parent
+        temp = agent.parents.get(temp)
         depth += 1
 
     if not found_root:
         new_root = current
         up_steps = 0
-        while new_root.parent and up_steps < 4:
-            new_root = new_root.parent
+        while agent.parents.get(new_root) and up_steps < 4:
+            new_root = agent.parents.get(new_root)
             up_steps += 1
         agent.view_root = new_root
 
@@ -263,7 +277,7 @@ def draw_tree_visualization(screen, font, agent):
     def draw_node(node, x, y, color):
         pygame.draw.circle(screen, color, (x, y), node_radius)
         pygame.draw.circle(screen, UI_COLORS['text'], (x, y), node_radius, 1)
-        text = font.render(f"{node.row},{node.column}", True, UI_COLORS['text'])
+        text = font.render(f"{node[0]},{node[1]}", True, UI_COLORS['text'])
         text = pygame.transform.scale(text, (int(text.get_width() * 0.7), int(text.get_height() * 0.7)))
         screen.blit(text, text.get_rect(center=(x, y)))
 
@@ -328,7 +342,7 @@ def main():
     button_font = pygame.font.Font(None, 20)
     
     # Initialize state variables
-    my_grid = Grid(GRID_SIZE)  # Start with a grid ready to go
+    my_grid = GraphEnvironment(GRID_SIZE)  # Start with a grid ready to go
     current_agent = None
     algorithm_type = "None"
     search_running = False
@@ -376,8 +390,6 @@ def main():
                     search_completed = False
                     bfs_button.text = "Searching..."
                     dfs_button.text = "Create DFS Agent"
-                    # Clear any previous markings
-                    my_grid.clear_marks()
             
             if dfs_button.handle_event(event):
                 if not search_running and my_grid is not None:
@@ -389,12 +401,10 @@ def main():
                     search_completed = False
                     dfs_button.text = "Searching..."
                     bfs_button.text = "Create BFS Agent"
-                    # Clear any previous markings
-                    my_grid.clear_marks()
             
             if reset_button.handle_event(event):
                 # Create new grid and reset everything
-                my_grid = Grid(GRID_SIZE)
+                my_grid = GraphEnvironment(GRID_SIZE)
                 current_agent = None
                 algorithm_type = "None"
                 search_running = False
@@ -414,8 +424,6 @@ def main():
                 current_agent.step()
                 last_step_time = current_time
         elif search_running and current_agent and current_agent.is_finished:
-            if len(current_agent.path):
-                my_grid.mark_path(current_agent.path)
             search_running = False
             search_completed = True
             bfs_button.text = "Create BFS Agent"
@@ -435,7 +443,7 @@ def main():
         screen.fill((0, 0, 0))
         
         # Draw the grid (left side)
-        draw_grid(screen, my_grid)
+        draw_grid(screen, my_grid, current_agent)
         
         # Draw the tree visualization (middle)
         draw_tree_visualization(screen, button_font, current_agent)

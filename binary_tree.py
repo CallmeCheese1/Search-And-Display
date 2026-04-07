@@ -1,7 +1,5 @@
-from environment import NodeType, Grid, Node
-
 class VisualizationTree:
-    def __init__(self, root_node: Node):
+    def __init__(self, root_node):
         self.root = root_node
 
         #Eventually, this will hold the entire tree, with parents and children.
