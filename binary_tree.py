@@ -4,9 +4,13 @@ class VisualizationTree:
 
         #Eventually, this will hold the entire tree, with parents and children.
         self.edges = []
+        self._edges_set = set()
     
     def add_edge(self, parent_node, child_node):
-        self.edges.append((parent_node, child_node))
+        edge = (parent_node, child_node)
+        if edge not in self._edges_set:
+            self._edges_set.add(edge)
+            self.edges.append(edge)
     
     def __str__(self):
         """String representation of the visualization tree for printing."""
