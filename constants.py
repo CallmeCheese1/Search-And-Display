@@ -33,5 +33,7 @@ UI_COLORS = {
     'tree_current': (245, 158, 11),
     'tree_edge': (148, 163, 184),
     'path': (52, 211, 153),
-    'panel_border': (226, 232, 240)
+    'panel_border': (226, 232, 240),
+    'widget_background': (255, 255, 255),
+    'widget_text': (30, 41, 59)
 }

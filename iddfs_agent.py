@@ -15,6 +15,7 @@ class IDDFS_SearchAgent:
         self.path = []
         self.current_node = start_node
         self.view_root = start_node
+        self.max_depth_reached_in_iteration = 0
         
         self.global_min_depths = {start_node: 0}
         self.visited = set()
@@ -27,6 +28,7 @@ class IDDFS_SearchAgent:
         self.frontier = [(self.start_node, 0)]
         self.visited_depths = {self.start_node: 0} 
         self.parents = {self.start_node: None}
+        self.max_depth_reached_in_iteration = 0
 
     def step(self):
         steps_taken = 0
@@ -34,14 +36,20 @@ class IDDFS_SearchAgent:
         while steps_taken < 50:
             if self.is_finished:
                 return
-                
             if not self.frontier:
-                # We exhausted this depth without finding the goal. Deepen by 1.
+                if self.max_depth_reached_in_iteration < self.depth_limit:
+                    self.is_finished = True
+                    self.path = []
+                    return
                 self.depth_limit += 1
                 self._initialize_iteration()
                 return
                 
             current_node, current_depth = self.frontier.pop()
+            
+            if current_depth > self.max_depth_reached_in_iteration:
+                self.max_depth_reached_in_iteration = current_depth
+                
             self.current_node = current_node
             
             self.visited.add(current_node)

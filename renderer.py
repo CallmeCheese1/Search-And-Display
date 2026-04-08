@@ -344,3 +344,38 @@ def draw_popup(screen, font, agent, elapsed_time):
         text = font.render(m, True, UI_COLORS['text'])
         screen.blit(text, text.get_rect(center=(300, y)))
         y += 40
+
+def draw_benchmark_results(screen, font, aggregated_data, chart_surface):
+    start_y = 160
+    start_x = 40
+    
+    headers = ["Algorithm", "Mean Time (s)", "Std Time", "Mean Expanded", "Std Expanded"]
+    col_widths = [140, 160, 140, 170, 160]
+    
+    curr_x = start_x
+    for i, h in enumerate(headers):
+        text = font.render(h, True, UI_COLORS['button'])
+        screen.blit(text, (curr_x, start_y))
+        curr_x += col_widths[i]
+        
+    pygame.draw.line(screen, UI_COLORS['panel_border'], (start_x, start_y + 30), (start_x + 750, start_y + 30), 2)
+    
+    y = start_y + 40
+    if aggregated_data:
+        for alg, data in aggregated_data.items():
+            row = [
+                alg,
+                f"{data['mean_time']:.5f}",
+                f"{data['std_time']:.5f}",
+                f"{data['mean_expanded']:.1f}",
+                f"{data['std_expanded']:.1f}"
+            ]
+            curr_x = start_x
+            for i, val in enumerate(row):
+                text = font.render(val, True, UI_COLORS['text'])
+                screen.blit(text, (curr_x, y))
+                curr_x += col_widths[i]
+            y += 40
+            
+    if chart_surface:
+        screen.blit(chart_surface, (start_x + 800, start_y))
