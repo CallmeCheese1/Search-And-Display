@@ -15,6 +15,7 @@ class NodeType(Enum):
     MARKED = 4
     PATH = 5
 
+#Ever since Part A of the project, yes, this file is STILL all the graph logic! Utilizes networkx to keep track of the grid or node space for pathfinding. If this environment is created in Grid mode, it's a grid. If it's created in tree mode, it's a tree. If we activate it in CSV mode, it parses and loads from the CSV IN THE SAME DIRECTORY and makes it into a tree.
 class GraphEnvironment:
     """Represents the graph space for pathfinding using NetworkX."""
     

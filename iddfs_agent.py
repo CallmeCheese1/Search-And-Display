@@ -2,6 +2,9 @@ from collections import deque
 from environment import NodeType
 from binary_tree import VisualizationTree
 
+#Oh, this class. Uses Iterative Deepening Depth-First Search, so it limits itself to checking at each depth before it checks deeper. As that implies, that requires a lot of calculations. As THAT implies, in the initial implementations, it kept crashing the program twice due to errors with how we handled programming the depth limits and node checking. But it's all good now!
+#...hopefully.
+
 class IDDFS_SearchAgent:
     """Iterative Deepening Depth-First Search implementation."""
     

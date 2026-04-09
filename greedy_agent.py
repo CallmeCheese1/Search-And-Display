@@ -8,8 +8,8 @@ def manhattan_distance(p1, p2):
 def euclidean_distance(p1, p2):
     return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) ** 0.5
 
+#Uses the Greedy Best-First Search algorithm, chasing the closest node in a priority heapq queue selected by our heuristic of choice.
 class Greedy_SearchAgent:
-    """Greedy Best-First Search implementation using a priority queue (heapq) directed by a heuristic."""
     
     def __init__(self, grid, start_node, use_euclidean=False):
         self.grid = grid

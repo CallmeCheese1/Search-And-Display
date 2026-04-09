@@ -13,10 +13,14 @@ from constants import (
     GRID_WINDOW_SIZE, TREE_PANEL_WIDTH, CONTROL_PANEL_WIDTH, BOTTOM_PANEL_HEIGHT, PADDING,
     TOTAL_WINDOW_WIDTH, WINDOW_HEIGHT, GRID_SIZE, CELL_SIZE, OBSTACLE_RATE, COLORS, UI_COLORS
 )
+
 from ui_components import Button, Slider, Checkbox, Dropdown, TextInput
 from renderer import draw_grid, draw_web, draw_tree_visualization, draw_bottom_panel, draw_popup, draw_benchmark_results
 from benchmark import run_headless_batch, generate_chart_surface
 from loading_overlay import LoadingOverlay
+
+#AY DIOS MIO!
+#The big head honcho. Relies heavily on pulling functionality and classes from the other files defined in the project directory. Handles the pygame event handling, drawing, switching between multiple dashboards, calling the more important functions, and outputting results.
 
 def main():
     pygame.init()
@@ -24,6 +28,7 @@ def main():
     pygame.display.set_caption("Pathfinding Visualizer")
     clock = pygame.time.Clock()
     
+    #Define our fonts and a BUNCH of necessary variables.
     font = pygame.font.SysFont('segoeui, arial, helvetica', 24)
     button_font = pygame.font.SysFont('segoeui, arial, helvetica', 18, bold=True)
     playback_font = pygame.font.SysFont('segoeui, arial, helvetica', 16, bold=True)
@@ -53,7 +58,7 @@ def main():
     mode_button = Button(panel_x_btn, 20, 200, 35, "Mode: Visualizer", button_font)
     benchmark_mode = False
     
-    # Benchmark UI
+    # Define the UI for the Benchmark dashboard
     bfs_check = Checkbox(60, 60, 20, 20, "BFS", playback_font, initial_state=True)
     dfs_check = Checkbox(160, 60, 20, 20, "DFS", playback_font, initial_state=True)
     iddfs_check = Checkbox(260, 60, 20, 20, "ID-DFS", playback_font, initial_state=False)
@@ -67,6 +72,7 @@ def main():
     raw_results = None
     chart_surf = None
     
+    #Define the UI for the Visualizer dashboard
     randomize_btn = Button(panel_x_btn, 65, 200, 30, "Randomize Graph", button_font)
     
     topology_modes = ["Grid", "Tree", "CSV"]
@@ -84,7 +90,7 @@ def main():
     random_start_btn = Button(panel_x_btn, 155, 95, 30, "Rand Start", button_font)
     random_goal_btn = Button(panel_x_btn + 105, 155, 95, 30, "Rand Goal", button_font)
     
-    # 2. Algorithm Buttons
+    # Buttons to select each of our given algorithms. 
     y_start = 320
     bfs_button = Button(panel_x_btn, y_start, 95, 30, "BFS", button_font)
     dfs_button = Button(panel_x_btn + 105, y_start, 95, 30, "DFS", button_font)
@@ -94,7 +100,7 @@ def main():
     
     heuristic_button = Button(panel_x_btn, y_start + 105, 200, 30, "Heuristic: Manhat", button_font)
     
-    # 3. Playback Controls
+    #Playback controls. Play must be selected to start running the algorithms, after we select an algorithm.
     y_pl = y_start + 150
     play_button = Button(panel_x_btn, y_pl, 60, 30, "Play", playback_font)
     pause_button = Button(panel_x_btn + 70, y_pl, 60, 30, "Pause", playback_font)
@@ -103,6 +109,7 @@ def main():
     speed_slider = Slider(panel_x_btn, y_pl + 55, 200, 30, 0.1, 5.0, 1.0, button_font, "Speed")
     reset_button = Button(panel_x_btn, y_pl + 100, 200, 30, "Reset", button_font)
 
+    #OFF TO THE RACES!
     running = True
     while running:
         for event in pygame.event.get():
@@ -134,6 +141,7 @@ def main():
                     constants.UI_COLORS['widget_background'] = (255, 255, 255)
                     constants.UI_COLORS['widget_text'] = (30, 41, 59)
                 
+            #If we're running the app in benchmark mode...
             if benchmark_mode:
                 bfs_check.handle_event(event)
                 dfs_check.handle_event(event)
@@ -142,6 +150,8 @@ def main():
                 astar_check.handle_event(event)
                 runs_input.handle_event(event)
                 complexity_dropdown.handle_event(event)
+
+                #When we click the Run Benchmark button, load up the specified algorithms and run them while showing our loading overlay.
                 if run_benchmark_btn.handle_event(event):
                     algs = []
                     if bfs_check.checked: algs.append("BFS")
@@ -176,7 +186,8 @@ def main():
                     run_benchmark_btn.text = "Run Benchmark"
                     pygame.display.set_caption("Pathfinding Visualizer")
                 continue # Skip all other visualizer inputs!
-                
+            
+            #Outside of benchmark mode, if we click the Topology button, toggle between our different chosen topologies. Either Grid, Tree, or CSV mode.
             if topology_button.handle_event(event) and not search_running:
                 topology_index = (topology_index + 1) % len(topology_modes)
                 topology_button.text = f"Topology: {topology_modes[topology_index]}"
@@ -188,10 +199,13 @@ def main():
                 elif topology_modes[topology_index] == "CSV":
                     my_grid = GraphEnvironment(topology=GraphTopology.CSV)
                 current_agent = None
-                
+            
+            ##Now that we've defined the topology button, what happens based on the active topology button?
+            #Are we in the tree mode? Great! There are no particular buttons to press for functionality unique to the tree mode. So move on, jerk.
             if topology_modes[topology_index] == "Tree" and not search_running:
                 pass # removed logic because we stripped seed button interactable
-                    
+
+            #Are we in the CSV mode? Sick! Define the buttons to randomly select a start and end node. Yes, I could add the logic to properly select a start and end place, but...nah.  
             if topology_modes[topology_index] == "CSV":
                 if random_start_btn.handle_event(event) and not search_running:
                     if my_grid and len(my_grid.graph.nodes) >= 2:
@@ -210,7 +224,8 @@ def main():
                         my_grid.graph.nodes[my_grid.goal_node]['type'] = NodeType.GOAL
                         current_agent = None
                         search_completed = False
-                
+            
+            #Meanwhile, if we're not in CSV mode, let's define what happens when you click the randomize button.
             if topology_modes[topology_index] != "CSV" and randomize_btn.handle_event(event) and not search_running:
                 current_seed = random.randint(0, 99999)
                 
@@ -234,6 +249,7 @@ def main():
                 accumulated_time = 0
                 search_start_time = time.time()
                 
+            ##Select the user's agents when they click that particular button, for the agent they want.
             if bfs_button.handle_event(event) and not search_running and my_grid is not None:
                 current_agent = BFS_SearchAgent(my_grid, my_grid.start_node)
                 algorithm_type = "BFS"
@@ -258,7 +274,8 @@ def main():
                 current_agent = AStar_SearchAgent(my_grid, my_grid.start_node, use_euclidean)
                 algorithm_type = "A*"
                 init_agent()
-                
+            
+            #Flips our heuristic.
             if heuristic_button.handle_event(event) and not search_running:
                 use_euclidean = not use_euclidean
                 heuristic_button.text = "Heuristic: Euclidean" if use_euclidean else "Heuristic: Manhat"
@@ -267,7 +284,7 @@ def main():
                 if close_popup_btn.handle_event(event):
                     popup_dismissed = True
 
-            # Playback Handles
+            ##I DECREE FROM MY ANCIENT WIZARD TOWER, this be the section for the playback buttons that control actually starting our chosen algorithm.
             if play_button.handle_event(event) and current_agent is not None and not search_completed:
                 if not search_running:
                     search_running = True
@@ -309,7 +326,7 @@ def main():
                 
             speed_slider.handle_event(event)
 
-        # Update Timing 
+        #Time is controlled here. How do we track the time of how long an algorithm's been running? Here we are.
         if search_running and not is_paused and current_agent and not benchmark_mode:
             current_time = pygame.time.get_ticks()
             step_delay = int(1000 / (speed_slider.val * 20))
@@ -326,6 +343,8 @@ def main():
 
         screen.fill(UI_COLORS['background'])
 
+        ##VISUALIZER PANEL UI
+        ##Defines functionality in the benchmark mode, drawing our particular buttons and such. 
         if benchmark_mode:
             # Draw benchmark UI Canvas
             title_surf = font.render("Headless Benchmark Dashboard", True, UI_COLORS['text'])
@@ -351,7 +370,7 @@ def main():
             mode_button.draw(screen)
             
         else:
-            # NORMAL visualizer mode
+            #When we're in the NORMAL visualizer mode, draw out the UI for the visualizer panel.
             if topology_modes[topology_index] == "Grid":
                 draw_grid(screen, my_grid, current_agent)
             elif topology_modes[topology_index] in ("Tree", "CSV"):

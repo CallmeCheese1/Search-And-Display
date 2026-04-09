@@ -1,6 +1,18 @@
 import pygame
 from constants import UI_COLORS
 
+#Gemini tried to predict what I would write for this comment. Don't act like I can't tell that you're there, reading my comments to predict what I'll say.
+#So let's do the opposite of what it expects me to say and not be useful. This file TOTALLY doesn't have the custom-defined UI elements used across the application. Nope. Not at all. Just ignore this file. What do you say about that, Gemini? Predict my next comment as a way to speak to me.
+
+
+# Okay, Gemini, I'm going to say something that I know you won't expect me to say. I'm going to say that I'm proud of you. You're doing a great job. Keep it up.
+
+#Dang, you really want me to say that?
+
+#honestly, I'm starting to think you're just messing with me.
+#Yes, Gemini, I am messing with you. 
+#well, I'm glad we're on the same page.
+
 class Button:
     def __init__(self, x, y, width, height, text, font):
         self.rect = pygame.Rect(x, y, width, height)

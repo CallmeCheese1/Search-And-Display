@@ -14,6 +14,8 @@ from astar_agent import AStar_SearchAgent
 
 matplotlib.use("Agg") # Headless render backend
 
+#Holds all the code for running the algorithims in a headless style by batches of algorithms, where we can choose the complexity, algorithms of choice, and number of runs. 
+
 def run_headless_batch(algorithms, complexity, runs, callback=None):
     results = {}
     
@@ -79,6 +81,7 @@ def run_headless_batch(algorithms, complexity, runs, callback=None):
         
     return aggregated
 
+#Returns a bar graph of the algorithm's performance from the headless mode runs up to now, and converts it into pixels so pygame knows how to render it.
 def generate_chart_surface(aggregated_data):
     if not aggregated_data:
         return None

@@ -2,6 +2,7 @@ import pygame
 import math
 from constants import TOTAL_WINDOW_WIDTH, WINDOW_HEIGHT, UI_COLORS
 
+#You know that really cool loading circle that appears while you run the benchmarks? Yeah. Welcome. This is that!
 class LoadingOverlay:
     def __init__(self, screen, font):
         self.screen = screen

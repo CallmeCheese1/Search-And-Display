@@ -5,6 +5,8 @@ from constants import (
     CELL_SIZE, UI_COLORS, COLORS
 )
 
+#Super long, and honestly, I no longer feel like writing these comments. As the name might imply, this file handles the rendering. Consider it the graphics card of our application.
+
 def draw_grid(screen, grid_obj, agent_obj=None):
     if grid_obj is None:
         return

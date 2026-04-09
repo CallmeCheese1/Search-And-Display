@@ -9,7 +9,7 @@ def euclidean_distance(p1, p2):
     return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) ** 0.5
 
 class AStar_SearchAgent:
-    """A* Search implementation combining path cost (g) and heuristic estimate (h) via Priority Queue."""
+    """A* Search implementation combining path cost (g) and a Greedy Best-First heuristic estimate (h) via Priority Queue."""
     
     def __init__(self, grid, start_node, use_euclidean=False):
         self.grid = grid
@@ -30,7 +30,8 @@ class AStar_SearchAgent:
         self.parents = {start_node: None}
         self.current_node = start_node
         self.view_root = start_node
-        
+    
+    #Our primary heuristic: returns the distance between us and the particular node we're looking for. Usually, it's gonna be between us and the goal.
     def _get_heuristic(self, node):
         if getattr(self.grid, 'topology', None) and self.grid.topology.name in ('TREE', 'CSV'):
             p1 = self.grid.node_positions[node]
@@ -42,6 +43,7 @@ class AStar_SearchAgent:
             return euclidean_distance(p1, p2)
         return manhattan_distance(p1, p2)
 
+    #Similar to the implementation of bfs and dfs agents, we run through A* one step at a time. Pygame calls this function multiple times per loop to run the algorithm.
     def step(self):
         if self.is_finished or not self.frontier:
             self.is_finished = True
@@ -78,6 +80,8 @@ class AStar_SearchAgent:
                 if neighbor not in self.visited: 
                     self.tree.add_edge(current_node, neighbor)
                     
+
+    #Walk back through the path that we've traveled when told!
     def _reconstruct_path(self, goal_node):
         path = []
         curr = goal_node

@@ -1,5 +1,8 @@
 from environment import NodeType
 
+
+#Some important constants. Try not to touch this much. Unless you really do want to change things.
+
 GRID_WINDOW_SIZE = 600
 TREE_PANEL_WIDTH = 400
 CONTROL_PANEL_WIDTH = 300
