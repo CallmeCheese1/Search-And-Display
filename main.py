@@ -41,7 +41,7 @@ def main():
     is_paused = False
     search_completed = False
     popup_dismissed = False
-    close_popup_btn = Button(260, 360, 80, 30, "Close", button_font)
+    close_popup_btn = Button(260, 400, 80, 30, "Close", button_font)
     loading_overlay = LoadingOverlay(screen, font)
     spinner_angle = 0
     
@@ -84,7 +84,7 @@ def main():
     
     # Tree specific configs
     current_seed = random.randint(0, 99999)
-    # Replaced seed button with render label dynamically positioned
+    seed_input = TextInput(panel_x_btn + 60, 160, 140, 25, str(current_seed), button_font)
     nodes_slider = Slider(panel_x_btn, 225, 200, 30, 5.0, 50.0, 20.0, button_font, "N Nodes")
     branch_slider = Slider(panel_x_btn, 275, 200, 30, 1.0, 5.0, 2.0, button_font, "Branches")
     random_start_btn = Button(panel_x_btn, 155, 95, 30, "Rand Start", button_font)
@@ -203,7 +203,13 @@ def main():
             ##Now that we've defined the topology button, what happens based on the active topology button?
             #Are we in the tree mode? Great! There are no particular buttons to press for functionality unique to the tree mode. So move on, jerk.
             if topology_modes[topology_index] == "Tree" and not search_running:
-                pass # removed logic because we stripped seed button interactable
+                if seed_input.handle_event(event):
+                    # When the user finishes editing (deactivates input), regenerate the graph
+                    if not seed_input.active and seed_input.text.isdigit():
+                        current_seed = int(seed_input.text)
+                        my_grid = GraphEnvironment(size=int(nodes_slider.val), seed=current_seed, topology=GraphTopology.TREE, branching_factor=int(branch_slider.val))
+                        current_agent = None
+                        search_completed = False
 
             #Are we in the CSV mode? Sick! Define the buttons to randomly select a start and end node. Yes, I could add the logic to properly select a start and end place, but...nah.  
             if topology_modes[topology_index] == "CSV":
@@ -228,6 +234,7 @@ def main():
             #Meanwhile, if we're not in CSV mode, let's define what happens when you click the randomize button.
             if topology_modes[topology_index] != "CSV" and randomize_btn.handle_event(event) and not search_running:
                 current_seed = random.randint(0, 99999)
+                seed_input.text = str(current_seed)
                 
                 if topology_modes[topology_index] == "Grid":
                     my_grid = GraphEnvironment(GRID_SIZE, seed=current_seed, obstacle_rate=obstacle_slider.val)
@@ -402,6 +409,11 @@ def main():
                 
             state_surface = font.render(f"State: {state_str}", True, UI_COLORS['text'])
             screen.blit(state_surface, (panel_x + PADDING, y_status + 30))
+            
+            # Live timer display
+            if search_running or search_completed:
+                timer_surface = font.render(f"Time: {elapsed_time:.3f}s", True, UI_COLORS['text'])
+                screen.blit(timer_surface, (panel_x + PADDING, y_status + 60))
 
             mode_button.draw(screen)
             
@@ -420,7 +432,8 @@ def main():
                 bg_rect = pygame.Rect(panel_x_btn - 10, 145, 220, 170)
                 pygame.draw.rect(screen, (241, 245, 249), bg_rect, border_radius=8)
                 pygame.draw.rect(screen, UI_COLORS['panel_border'], bg_rect, 2, border_radius=8)
-                screen.blit(button_font.render(f"Seed: {current_seed}", True, UI_COLORS['text']), (panel_x_btn, 160))
+                screen.blit(button_font.render("Seed:", True, UI_COLORS['text']), (panel_x_btn, 163))
+                seed_input.draw(screen)
                 nodes_slider.draw(screen)
                 branch_slider.draw(screen)
                 

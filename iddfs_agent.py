@@ -22,6 +22,7 @@ class IDDFS_SearchAgent:
         
         self.global_min_depths = {start_node: 0}
         self.visited = set()
+        self.max_memory_nodes = 0
         
         self._initialize_iteration()
 
@@ -39,6 +40,8 @@ class IDDFS_SearchAgent:
         while steps_taken < 50:
             if self.is_finished:
                 return
+            
+            self.max_memory_nodes = max(self.max_memory_nodes, len(self.frontier) + len(self.visited))
             if not self.frontier:
                 if self.max_depth_reached_in_iteration < self.depth_limit:
                     self.is_finished = True

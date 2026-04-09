@@ -13,11 +13,14 @@ class DFS_SearchAgent:
         self.parents = {start_node: None}
         self.current_node = start_node
         self.view_root = start_node
+        self.max_memory_nodes = 0
     
     def step(self):
         if self.is_finished or not self.frontier:
             self.is_finished = True
             return
+        
+        self.max_memory_nodes = max(self.max_memory_nodes, len(self.frontier) + len(self.visited))
         
         current_node = self.frontier.pop()
         self.current_node = current_node

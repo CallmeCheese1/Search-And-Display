@@ -231,7 +231,7 @@ class TextInput:
                 self.text = self.text[:-1]
             else:
                 if event.unicode.isdigit():
-                    if len(self.text) < 4:
+                    if len(self.text) < 5:
                         self.text += event.unicode
             return True
         return False

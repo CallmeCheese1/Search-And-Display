@@ -33,7 +33,8 @@ def run_headless_batch(algorithms, complexity, runs, callback=None):
         results[alg] = {
             'times': [],
             'expanded': [],
-            'path_length': []
+            'path_length': [],
+            'memory': []
         }
         
     for run in range(runs):
@@ -68,6 +69,7 @@ def run_headless_batch(algorithms, complexity, runs, callback=None):
             results[alg]['expanded'].append(visited_len)
             path_len = len(getattr(agent, 'path', [])) if getattr(agent, 'path', []) else 0
             results[alg]['path_length'].append(path_len)
+            results[alg]['memory'].append(getattr(agent, 'max_memory_nodes', 0))
             
     aggregated = {}
     for alg, data in results.items():
@@ -76,7 +78,9 @@ def run_headless_batch(algorithms, complexity, runs, callback=None):
             'mean_time': np.mean(data['times']),
             'std_time': np.std(data['times']),
             'mean_expanded': np.mean(data['expanded']),
-            'std_expanded': np.std(data['expanded'])
+            'std_expanded': np.std(data['expanded']),
+            'mean_memory': np.mean(data['memory']),
+            'std_memory': np.std(data['memory'])
         }
         
     return aggregated

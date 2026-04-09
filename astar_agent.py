@@ -30,6 +30,7 @@ class AStar_SearchAgent:
         self.parents = {start_node: None}
         self.current_node = start_node
         self.view_root = start_node
+        self.max_memory_nodes = 0
     
     #Our primary heuristic: returns the distance between us and the particular node we're looking for. Usually, it's gonna be between us and the goal.
     def _get_heuristic(self, node):
@@ -48,6 +49,8 @@ class AStar_SearchAgent:
         if self.is_finished or not self.frontier:
             self.is_finished = True
             return
+        
+        self.max_memory_nodes = max(self.max_memory_nodes, len(self.frontier) + len(self.visited))
             
         f, _, current_node = heapq.heappop(self.frontier)
         self.current_node = current_node
@@ -63,8 +66,9 @@ class AStar_SearchAgent:
             return
 
         for neighbor in self.grid.get_neighbors(current_node):
-            # Assumes uniform cost of 1 for grid movements
-            tentative_g = self.g_scores[current_node] + 1
+            # Use edge weight if available (weighted graphs), otherwise default to 1
+            edge_weight = self.grid.graph[current_node][neighbor].get('weight', 1)
+            tentative_g = self.g_scores[current_node] + edge_weight
             
             # If we found a strictly better path or haven't tracked this neighbor's g_score
             if tentative_g < self.g_scores.get(neighbor, float('inf')):

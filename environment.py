@@ -62,6 +62,11 @@ class GraphEnvironment:
             
             for n in self.graph.nodes:
                 self.graph.nodes[n]['type'] = NodeType.EMPTY
+            
+            # Assign random weights to edges
+            for u, v in self.graph.edges:
+                self.graph[u][v]['weight'] = random.randint(1, 10)
+            
             self._place_start_and_goal()
             
         elif self.topology == GraphTopology.CSV:
@@ -88,6 +93,15 @@ class GraphEnvironment:
                                 source = parts[0]
                                 for dest in parts[1:]:
                                     self.graph.add_edge(source, dest)
+                
+                # Assign distance-based weights to CSV edges
+                import math
+                for u, v in self.graph.edges:
+                    if u in self.node_positions and v in self.node_positions:
+                        p1 = self.node_positions[u]
+                        p2 = self.node_positions[v]
+                        dist = math.hypot(p1[0] - p2[0], p1[1] - p2[1])
+                        self.graph[u][v]['weight'] = max(1, round(dist * 50))
             except Exception as e:
                 print(f"Error parsing CSV/TXT files: {e}")
                 

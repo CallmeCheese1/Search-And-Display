@@ -52,6 +52,19 @@ def draw_web(screen, grid_obj, agent_obj=None):
         
         pygame.draw.line(screen, UI_COLORS['tree_edge'], (x1, y1), (x2, y2), 2)
         
+        # Render edge weight label at midpoint (only for weighted graphs, i.e. Tree topology)
+        weight = grid_obj.graph[u][v].get('weight', None)
+        if weight is not None:
+            mid_x = (x1 + x2) // 2
+            mid_y = (y1 + y2) // 2
+            weight_font = pygame.font.SysFont('segoeui, arial', 11, bold=True)
+            weight_text = weight_font.render(str(weight), True, (200, 60, 60))
+            weight_rect = weight_text.get_rect(center=(mid_x, mid_y))
+            # Small background pill for readability
+            bg_rect = weight_rect.inflate(6, 2)
+            pygame.draw.rect(screen, (255, 255, 255), bg_rect, border_radius=3)
+            screen.blit(weight_text, weight_rect)
+        
     for node in grid_obj.graph.nodes:
         if node not in grid_obj.node_positions: continue
         px, py = grid_obj.node_positions[node]
@@ -328,7 +341,7 @@ def draw_popup(screen, font, agent, elapsed_time):
     overlay.fill((0, 0, 0))
     screen.blit(overlay, (0, 0))
     
-    popup = pygame.Rect(100, 150, 400, 300)
+    popup = pygame.Rect(100, 150, 400, 340)
     pygame.draw.rect(screen, UI_COLORS['background'], popup, border_radius=10)
     pygame.draw.rect(screen, UI_COLORS['panel_border'], popup, 2, border_radius=10)
     
@@ -338,7 +351,8 @@ def draw_popup(screen, font, agent, elapsed_time):
     metrics = [
         f"Time Elapsed: {elapsed_time:.3f} s",
         f"Nodes Expanded: {len(getattr(agent, 'visited', []))}",
-        f"Path Length: {len(getattr(agent, 'path', [])) if getattr(agent, 'path', []) else 'No Path'}"
+        f"Path Length: {len(getattr(agent, 'path', [])) if getattr(agent, 'path', []) else 'No Path'}",
+        f"Peak Memory: {getattr(agent, 'max_memory_nodes', 0)} nodes"
     ]
     
     y = 240
@@ -351,18 +365,30 @@ def draw_benchmark_results(screen, font, aggregated_data, chart_surface):
     start_y = 160
     start_x = 40
     
-    headers = ["Algorithm", "Mean Time (s)", "Std Time", "Mean Expanded", "Std Expanded"]
-    col_widths = [140, 160, 140, 170, 160]
+    # Two-line headers: (line1, line2)
+    headers = [
+        ("Algorithm", ""),
+        ("Mean", "Time (s)"),
+        ("Std", "Time"),
+        ("Mean", "Expanded"),
+        ("Std", "Expanded"),
+        ("Peak", "Memory")
+    ]
+    col_widths = [110, 130, 100, 120, 120, 110]
     
+    header_font = pygame.font.SysFont('segoeui, arial, helvetica', 18, bold=True)
     curr_x = start_x
-    for i, h in enumerate(headers):
-        text = font.render(h, True, UI_COLORS['button'])
-        screen.blit(text, (curr_x, start_y))
+    for i, (line1, line2) in enumerate(headers):
+        text1 = header_font.render(line1, True, UI_COLORS['button'])
+        screen.blit(text1, (curr_x, start_y))
+        if line2:
+            text2 = header_font.render(line2, True, UI_COLORS['button'])
+            screen.blit(text2, (curr_x, start_y + 20))
         curr_x += col_widths[i]
         
-    pygame.draw.line(screen, UI_COLORS['panel_border'], (start_x, start_y + 30), (start_x + 750, start_y + 30), 2)
+    pygame.draw.line(screen, UI_COLORS['panel_border'], (start_x, start_y + 45), (start_x + 680, start_y + 45), 2)
     
-    y = start_y + 40
+    y = start_y + 55
     if aggregated_data:
         for alg, data in aggregated_data.items():
             row = [
@@ -370,14 +396,15 @@ def draw_benchmark_results(screen, font, aggregated_data, chart_surface):
                 f"{data['mean_time']:.5f}",
                 f"{data['std_time']:.5f}",
                 f"{data['mean_expanded']:.1f}",
-                f"{data['std_expanded']:.1f}"
+                f"{data['std_expanded']:.1f}",
+                f"{data.get('mean_memory', 0):.0f}"
             ]
             curr_x = start_x
             for i, val in enumerate(row):
                 text = font.render(val, True, UI_COLORS['text'])
                 screen.blit(text, (curr_x, y))
                 curr_x += col_widths[i]
-            y += 40
+            y += 35
             
     if chart_surface:
-        screen.blit(chart_surface, (start_x + 800, start_y))
+        screen.blit(chart_surface, (start_x + 750, start_y))
