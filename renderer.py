@@ -7,6 +7,14 @@ from constants import (
 
 #Super long, and honestly, I no longer feel like writing these comments. As the name might imply, this file handles the rendering. Consider it the graphics card of our application.
 
+# Module-level font cache to avoid expensive SysFont lookups every frame
+_font_cache = {}
+def _get_font(size, bold=True):
+    key = (size, bold)
+    if key not in _font_cache:
+        _font_cache[key] = pygame.font.SysFont('segoeui, arial', size, bold=bold)
+    return _font_cache[key]
+
 def draw_grid(screen, grid_obj, agent_obj=None):
     if grid_obj is None:
         return
@@ -39,6 +47,10 @@ def draw_grid(screen, grid_obj, agent_obj=None):
 def draw_web(screen, grid_obj, agent_obj=None):
     if grid_obj is None or not hasattr(grid_obj, 'node_positions'):
         return
+    
+    # Use cached fonts — SysFont is very expensive per-call
+    weight_font = _get_font(11)
+    node_font = _get_font(10)
         
     for u, v in grid_obj.graph.edges:
         if u not in grid_obj.node_positions or v not in grid_obj.node_positions: continue
@@ -57,7 +69,6 @@ def draw_web(screen, grid_obj, agent_obj=None):
         if weight is not None:
             mid_x = (x1 + x2) // 2
             mid_y = (y1 + y2) // 2
-            weight_font = pygame.font.SysFont('segoeui, arial', 11, bold=True)
             weight_text = weight_font.render(str(weight), True, (200, 60, 60))
             weight_rect = weight_text.get_rect(center=(mid_x, mid_y))
             # Small background pill for readability
@@ -82,7 +93,7 @@ def draw_web(screen, grid_obj, agent_obj=None):
         else:
             color = COLORS.get(node_type, UI_COLORS['tree_node'])
             
-        text = pygame.font.SysFont('segoeui, arial', 10, bold=True).render(str(node), True, UI_COLORS['text'])
+        text = node_font.render(str(node), True, UI_COLORS['text'])
         text_rect = text.get_rect(center=(x, y))
         
         if isinstance(node, str) and not node.isdigit():
@@ -145,7 +156,7 @@ def draw_tree_visualization(screen, font, agent):
             pygame.draw.rect(screen, UI_COLORS['text'], rect, 1, border_radius=6)
             
             node_str = f"({node[0]},{node[1]})" if isinstance(node, tuple) else str(node)
-            text = pygame.font.SysFont('segoeui, arial', 12, bold=True).render(node_str, True, UI_COLORS['text'])
+            text = _get_font(12).render(node_str, True, UI_COLORS['text'])
             screen.blit(text, text.get_rect(center=rect.center))
             
         return
@@ -208,7 +219,7 @@ def draw_tree_visualization(screen, font, agent):
 
     for level, nodes in levels.items():
         y = tier_height * (level + 1)
-        depth_label = pygame.font.SysFont('segoeui, arial', 14, bold=True).render(f"Depth {absolute_depth + level}", True, (150, 150, 180))
+        depth_label = _get_font(14).render(f"Depth {absolute_depth + level}", True, (150, 150, 180))
         screen.blit(depth_label, (tree_x + 10, y - 10))
         
         spacing = (TREE_PANEL_WIDTH - 70) // (len(nodes) + 1)
@@ -249,7 +260,7 @@ def draw_tree_visualization(screen, font, agent):
             pygame.draw.rect(screen, UI_COLORS['text'], rect, 1, border_radius=6)
             
             node_str = f"({node[0]},{node[1]})" if isinstance(node, tuple) else str(node)
-            text = pygame.font.SysFont('segoeui, arial', 12, bold=True).render(node_str, True, UI_COLORS['text'])
+            text = _get_font(12).render(node_str, True, UI_COLORS['text'])
             screen.blit(text, text.get_rect(center=rect.center))
 
 def get_frontier_nodes(agent):
@@ -321,11 +332,11 @@ def draw_bottom_panel(screen, font, agent):
         pygame.draw.rect(screen, UI_COLORS['text'], rect, 1, border_radius=6)
         
         node_str = f"({node[0]},{node[1]})" if isinstance(node, tuple) else str(node)
-        node_text = pygame.font.SysFont('segoeui, arial', 14, bold=True).render(node_str, True, text_color)
+        node_text = _get_font(14).render(node_str, True, text_color)
         
         if meta:
             screen.blit(node_text, node_text.get_rect(centerx=rect.centerx, centery=rect.centery - 8))
-            meta_text = pygame.font.SysFont('segoeui, arial', 12, bold=True).render(meta, True, (220, 220, 220) if i == len(visible_nodes) - 1 else (100, 100, 100))
+            meta_text = _get_font(12).render(meta, True, (220, 220, 220) if i == len(visible_nodes) - 1 else (100, 100, 100))
             screen.blit(meta_text, meta_text.get_rect(centerx=rect.centerx, centery=rect.centery + 10))
         else:
             screen.blit(node_text, node_text.get_rect(centerx=rect.centerx, centery=rect.centery))
@@ -341,25 +352,34 @@ def draw_popup(screen, font, agent, elapsed_time):
     overlay.fill((0, 0, 0))
     screen.blit(overlay, (0, 0))
     
-    popup = pygame.Rect(100, 150, 400, 340)
+    popup = pygame.Rect(100, 130, 400, 380)
     pygame.draw.rect(screen, UI_COLORS['background'], popup, border_radius=10)
     pygame.draw.rect(screen, UI_COLORS['panel_border'], popup, 2, border_radius=10)
     
-    title = pygame.font.SysFont('segoeui, arial', 28, bold=True).render("Search Completed!", True, UI_COLORS['button'])
-    screen.blit(title, title.get_rect(center=(300, 180)))
+    title = _get_font(28).render("Search Completed!", True, UI_COLORS['button'])
+    screen.blit(title, title.get_rect(center=(300, 160)))
+    
+    # Calculate total path cost from edge weights
+    path = getattr(agent, 'path', [])
+    path_cost = 0
+    if path and len(path) > 1 and hasattr(agent, 'grid'):
+        for i in range(len(path) - 1):
+            u, v = path[i], path[i+1]
+            path_cost += agent.grid.graph[u][v].get('weight', 1)
     
     metrics = [
         f"Time Elapsed: {elapsed_time:.3f} s",
         f"Nodes Expanded: {len(getattr(agent, 'visited', []))}",
-        f"Path Length: {len(getattr(agent, 'path', [])) if getattr(agent, 'path', []) else 'No Path'}",
+        f"Path Length: {len(path) if path else 'No Path'}",
+        f"Path Cost: {path_cost}" if path else "Path Cost: N/A",
         f"Peak Memory: {getattr(agent, 'max_memory_nodes', 0)} nodes"
     ]
     
-    y = 240
+    y = 220
     for m in metrics:
         text = font.render(m, True, UI_COLORS['text'])
         screen.blit(text, text.get_rect(center=(300, y)))
-        y += 40
+        y += 35
 
 def draw_benchmark_results(screen, font, aggregated_data, chart_surface):
     start_y = 160
@@ -376,7 +396,7 @@ def draw_benchmark_results(screen, font, aggregated_data, chart_surface):
     ]
     col_widths = [110, 130, 100, 120, 120, 110]
     
-    header_font = pygame.font.SysFont('segoeui, arial, helvetica', 18, bold=True)
+    header_font = _get_font(18)
     curr_x = start_x
     for i, (line1, line2) in enumerate(headers):
         text1 = header_font.render(line1, True, UI_COLORS['button'])

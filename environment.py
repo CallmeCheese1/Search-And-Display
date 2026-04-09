@@ -122,7 +122,7 @@ class GraphEnvironment:
                     
                 # Collision resolution for overlapping city plates
                 import math
-                for _ in range(100):
+                for _ in range(200):
                     moved = False
                     for n1 in self.graph.nodes:
                         for n2 in self.graph.nodes:
@@ -130,7 +130,7 @@ class GraphEnvironment:
                                 p1 = self.node_positions[n1]
                                 p2 = self.node_positions[n2]
                                 dist = math.hypot(p1[0]-p2[0], p1[1]-p2[1])
-                                min_dist = 0.075 # Threshold padding based on string render width roughly
+                                min_dist = 0.11 # Wider threshold to prevent city name overlap
                                 if dist < min_dist:
                                     if dist == 0:
                                         dx, dy = 0.01, 0.01
@@ -140,8 +140,11 @@ class GraphEnvironment:
                                         dy = p1[1] - p2[1]
                                     push = (min_dist - dist) / 2
                                     # Dampen x and y pushing slightly
-                                    self.node_positions[n1] = (p1[0] + (dx/dist)*push, p1[1] + (dy/dist)*push)
-                                    self.node_positions[n2] = (p2[0] - (dx/dist)*push, p2[1] - (dy/dist)*push)
+                                    new_n1 = (p1[0] + (dx/dist)*push, p1[1] + (dy/dist)*push)
+                                    new_n2 = (p2[0] - (dx/dist)*push, p2[1] - (dy/dist)*push)
+                                    # Clamp to visible bounds
+                                    self.node_positions[n1] = (max(0.03, min(0.97, new_n1[0])), max(0.03, min(0.97, new_n1[1])))
+                                    self.node_positions[n2] = (max(0.03, min(0.97, new_n2[0])), max(0.03, min(0.97, new_n2[1])))
                                     moved = True
                     if not moved:
                         break

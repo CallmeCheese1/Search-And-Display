@@ -41,7 +41,7 @@ def main():
     is_paused = False
     search_completed = False
     popup_dismissed = False
-    close_popup_btn = Button(260, 400, 80, 30, "Close", button_font)
+    close_popup_btn = Button(260, 420, 80, 30, "Close", button_font)
     loading_overlay = LoadingOverlay(screen, font)
     spinner_angle = 0
     
